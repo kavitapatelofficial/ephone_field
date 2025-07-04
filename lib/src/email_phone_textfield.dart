@@ -11,6 +11,7 @@ class EPhoneField extends StatefulWidget {
   const EPhoneField({
     Key? key,
     this.controller,
+    this.cursorColor,
     this.focusNode,
     this.initialType = EphoneFieldType.initial,
     this.countries = Country.values,
@@ -29,10 +30,11 @@ class EPhoneField extends StatefulWidget {
     this.onCountryChanged,
     this.initialValue,
     this.emptyLabelText = 'Email or phone number',
-    this.emailLabelText = 'Email',
-    this.phoneLabelText = 'Phone number',
+    this.emailLabelText = '',
+    this.phoneLabelText = '',
     this.onSaved,
     this.onFieldSubmitted,
+    this.spacing = 20,
     this.decoration = const InputDecoration(
       border: OutlineInputBorder(),
       hintText: 'Email or phone number',
@@ -43,8 +45,10 @@ class EPhoneField extends StatefulWidget {
     this.emailValidator,
     this.phoneValidator,
     this.emptyErrorText,
+    required this.countryPickerButtonPadding,
     this.countryPickerButtonWidth = 108.0,
     this.autovalidateMode,
+    required this.boxDecoration,
   }) : super(key: key);
 
   /// The [FocusNode] of the input field.
@@ -52,6 +56,9 @@ class EPhoneField extends StatefulWidget {
 
   /// The [TextEditingController] of the input field.
   final TextEditingController? controller;
+  final Color? cursorColor;
+  final BoxDecoration boxDecoration;
+  final double spacing;
 
   /// The [List<Country>] to be used in the country picker. Defaults to [Country.values].
   final List<Country> countries;
@@ -158,6 +165,7 @@ class EPhoneField extends StatefulWidget {
 
   /// The [double] to be used as the width of the country picker button. Defaults to 100.0.
   final double countryPickerButtonWidth;
+  final EdgeInsets countryPickerButtonPadding;
 
   /// The [AutovalidateMode] to be used as the autovalidate mode of the input field. Defaults to [AutovalidateMode.onUserInteraction].
   final AutovalidateMode? autovalidateMode;
@@ -194,29 +202,48 @@ class _EphoneFieldState extends State<EPhoneField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: _controller,
-      focusNode: _focusNode,
-      autovalidateMode: widget.autovalidateMode,
-      onChanged: _type.onChanged(_selectedCountry, widget.phoneNumberMaskSplitter, widget.onChanged),
-      onSaved: _type.onSaved(_selectedCountry, widget.phoneNumberMaskSplitter, widget.onSaved),
-      onFieldSubmitted: _type.onFieldSubmitted(
-        _selectedCountry,
-        widget.phoneNumberMaskSplitter,
-        widget.onFieldSubmitted,
-      ),
-      initialValue: widget.initialValue,
-      decoration: widget.decoration.copyWith(
-          prefixIcon: _buildCountryPicker(_type == EphoneFieldType.phone),
-          labelText: _type.labelText(widget.emptyLabelText, widget.emailLabelText, widget.phoneLabelText)),
-      keyboardType: _type.keyboardType,
-      validator: _type.validator(
-        _selectedValidator,
-        _selectedCountry,
-        widget.phoneNumberMaskSplitter,
-      ),
-      inputFormatters:
-          widget.inputFormatters ?? _type.inputFormatters(_selectedCountry, widget.phoneNumberMaskSplitter),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        if (_buildCountryPicker(_type == EphoneFieldType.phone) != null) ...[
+          _buildCountryPicker(_type == EphoneFieldType.phone)!,
+          SizedBox(
+            width: widget.spacing,
+          ),
+        ],
+        Expanded(
+          child: TextFormField(
+            controller: _controller,
+            autofocus: true,
+            cursorColor: widget.cursorColor,
+            focusNode: _focusNode,
+            autovalidateMode: widget.autovalidateMode,
+            onChanged: _type.onChanged(_selectedCountry,
+                widget.phoneNumberMaskSplitter, widget.onChanged),
+            onSaved: _type.onSaved(_selectedCountry,
+                widget.phoneNumberMaskSplitter, widget.onSaved),
+            onFieldSubmitted: _type.onFieldSubmitted(
+              _selectedCountry,
+              widget.phoneNumberMaskSplitter,
+              widget.onFieldSubmitted,
+            ),
+            initialValue: widget.initialValue,
+            decoration: widget.decoration.copyWith(
+                labelText: _type.labelText(widget.emptyLabelText,
+                    widget.emailLabelText, widget.phoneLabelText)),
+            keyboardType: _type.keyboardType,
+            validator: _type.validator(
+              _selectedValidator,
+              _selectedCountry,
+              widget.phoneNumberMaskSplitter,
+            ),
+            inputFormatters: widget.inputFormatters ??
+                _type.inputFormatters(
+                    _selectedCountry, widget.phoneNumberMaskSplitter),
+          ),
+        ),
+      ],
     );
   }
 
@@ -224,7 +251,9 @@ class _EphoneFieldState extends State<EPhoneField> {
   Widget? _buildCountryPicker(bool isPhoneFieldSelected) {
     return isPhoneFieldSelected
         ? CountryPickerButton(
+            padding: widget.countryPickerButtonPadding,
             initialValue: _selectedCountry,
+            boxDecoration: widget.boxDecoration,
             onValuePicked: (Country country) {
               setState(() {
                 _selectedCountry = country;
@@ -271,7 +300,8 @@ class _EphoneFieldState extends State<EPhoneField> {
       case EphoneFieldType.initial:
         _selectedValidator = widget.emptyErrorText == null
             ? null
-            : (value) => value == null || value.isEmpty ? widget.emptyErrorText : null;
+            : (value) =>
+                value == null || value.isEmpty ? widget.emptyErrorText : null;
         break;
       case EphoneFieldType.email:
         _selectedValidator = widget.emailValidator;

@@ -19,7 +19,9 @@ class CountryPickerButton extends StatelessWidget {
     required this.countries,
     required this.width,
     required this.icon,
+    required this.padding,
     required this.pickerHeight,
+    required this.boxDecoration,
   }) : super(key: key);
 
   final void Function(Country) onValuePicked;
@@ -32,38 +34,53 @@ class CountryPickerButton extends StatelessWidget {
   final CountryPickerHeigth pickerHeight;
   final String? title;
   final double width;
+  final BoxDecoration boxDecoration;
   final IconData icon;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: _openCountryPickerMenu(menuType, context, searchInputDecoration, title, titlePadding, pickerHeight,
-          isSearchable, countries, onValuePicked),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 8.0),
-        child: SizedBox(
-          width: width,
-          height: 20,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                '+${initialValue.dialCode}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                width: 4.0,
-              ),
-              Image.asset(
-                initialValue.flagImagePath,
-                package: 'ephone_field',
-                width: 20.0,
-              ),
-              const SizedBox(
-                width: 4.0,
-              ),
-              Icon(icon),
-            ],
+    return Container(
+      padding: padding,
+      decoration: boxDecoration,
+      child: InkWell(
+        onTap: _openCountryPickerMenu(
+            menuType,
+            context,
+            searchInputDecoration,
+            title,
+            titlePadding,
+            pickerHeight,
+            isSearchable,
+            countries,
+            onValuePicked),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: SizedBox(
+            width: width,
+            height: 20,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  '+${initialValue.dialCode}',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(
+                  width: 4.0,
+                ),
+                Image.asset(
+                  initialValue.flagImagePath,
+                  package: 'ephone_field',
+                  width: 20.0,
+                ),
+                const SizedBox(
+                  width: 4.0,
+                ),
+                Icon(icon),
+              ],
+            ),
           ),
         ),
       ),
@@ -83,14 +100,21 @@ void Function()? _openCountryPickerMenu(
     void Function(Country) onValuePicked) {
   switch (menuType) {
     case PickerMenuType.dialog:
-      return _openCountryPickerDialog(
-          context, searchInputDecoration, title, titlePadding, isSearchable, pickerHeight, countries, onValuePicked);
+      return _openCountryPickerDialog(context, searchInputDecoration, title,
+          titlePadding, isSearchable, pickerHeight, countries, onValuePicked);
     case PickerMenuType.bottomSheet:
       return _openCountryPickerBottomSheet(
-          context, searchInputDecoration, title, titlePadding, isSearchable, pickerHeight, countries, onValuePicked);
+          context,
+          searchInputDecoration,
+          title,
+          titlePadding,
+          isSearchable,
+          pickerHeight,
+          countries,
+          onValuePicked);
     case PickerMenuType.page:
-      return _openCountryPickerPage(
-          context, searchInputDecoration, title, titlePadding, isSearchable, countries, onValuePicked);
+      return _openCountryPickerPage(context, searchInputDecoration, title,
+          titlePadding, isSearchable, countries, onValuePicked);
   }
 }
 
