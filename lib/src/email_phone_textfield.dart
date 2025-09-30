@@ -47,12 +47,16 @@ class EPhoneField extends StatefulWidget {
     this.emptyErrorText,
     required this.countryPickerButtonPadding,
     this.countryPickerButtonWidth = 108.0,
+    this.countryPickerButtonHight,
     this.autovalidateMode,
     required this.boxDecoration,
+    this.enabled = true,
   }) : super(key: key);
 
   /// The [FocusNode] of the input field.
   final FocusNode? focusNode;
+
+  final bool enabled;
 
   /// The [TextEditingController] of the input field.
   final TextEditingController? controller;
@@ -165,6 +169,7 @@ class EPhoneField extends StatefulWidget {
 
   /// The [double] to be used as the width of the country picker button. Defaults to 100.0.
   final double countryPickerButtonWidth;
+  final double? countryPickerButtonHight;
   final EdgeInsets countryPickerButtonPadding;
 
   /// The [AutovalidateMode] to be used as the autovalidate mode of the input field. Defaults to [AutovalidateMode.onUserInteraction].
@@ -214,6 +219,7 @@ class _EphoneFieldState extends State<EPhoneField> {
         ],
         Expanded(
           child: TextFormField(
+            enabled: widget.enabled,
             controller: _controller,
             autofocus: true,
             cursorColor: widget.cursorColor,
@@ -229,9 +235,7 @@ class _EphoneFieldState extends State<EPhoneField> {
               widget.onFieldSubmitted,
             ),
             initialValue: widget.initialValue,
-            decoration: widget.decoration.copyWith(
-                labelText: _type.labelText(widget.emptyLabelText,
-                    widget.emailLabelText, widget.phoneLabelText)),
+            decoration: widget.decoration,
             keyboardType: _type.keyboardType,
             validator: _type.validator(
               _selectedValidator,
@@ -270,6 +274,7 @@ class _EphoneFieldState extends State<EPhoneField> {
             width: widget.countryPickerButtonWidth,
             icon: widget.countryPickerButtonIcon,
             pickerHeight: widget.pickerHeight,
+            countryPickerButtonHight: widget.countryPickerButtonHight,
           )
         : null;
   }
@@ -288,7 +293,7 @@ class _EphoneFieldState extends State<EPhoneField> {
       setState(() {
         _type = EphoneFieldType.email;
       });
-    } else {
+    } else if(int.tryParse(text) != null) {
       setState(() {
         _type = EphoneFieldType.phone;
       });

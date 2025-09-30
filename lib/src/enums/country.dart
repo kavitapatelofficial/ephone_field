@@ -22,6 +22,10 @@ class Country {
       required this.maxLength,
       required this.mask});
 
+  static Country getCountry(String alpha2) {
+    return values.firstWhere((e) => e.alpha2 == alpha2);
+  }
+
   /// Returns the all the countries in the world that are supported by this package
   static const List<Country> values = <Country>[
     Country.afghanistan,

@@ -7,22 +7,23 @@ import 'country_card.dart';
 import 'country_picker_menu.dart';
 
 class CountryPickerButton extends StatelessWidget {
-  const CountryPickerButton({
-    Key? key,
-    required this.initialValue,
-    required this.onValuePicked,
-    required this.menuType,
-    required this.isSearchable,
-    required this.searchInputDecoration,
-    required this.titlePadding,
-    required this.title,
-    required this.countries,
-    required this.width,
-    required this.icon,
-    required this.padding,
-    required this.pickerHeight,
-    required this.boxDecoration,
-  }) : super(key: key);
+  const CountryPickerButton(
+      {Key? key,
+      required this.initialValue,
+      required this.onValuePicked,
+      required this.menuType,
+      required this.isSearchable,
+      required this.searchInputDecoration,
+      required this.titlePadding,
+      required this.title,
+      required this.countries,
+      required this.width,
+      required this.icon,
+      required this.padding,
+      required this.pickerHeight,
+      required this.boxDecoration,
+      this.countryPickerButtonHight})
+      : super(key: key);
 
   final void Function(Country) onValuePicked;
   final Country initialValue;
@@ -37,51 +38,48 @@ class CountryPickerButton extends StatelessWidget {
   final BoxDecoration boxDecoration;
   final IconData icon;
   final EdgeInsets padding;
+  final double? countryPickerButtonHight;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: boxDecoration,
-      child: InkWell(
-        onTap: _openCountryPickerMenu(
-            menuType,
-            context,
-            searchInputDecoration,
-            title,
-            titlePadding,
-            pickerHeight,
-            isSearchable,
-            countries,
-            onValuePicked),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: SizedBox(
-            width: width,
-            height: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  '+${initialValue.dialCode}',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(
-                  width: 4.0,
-                ),
-                Image.asset(
-                  initialValue.flagImagePath,
-                  package: 'ephone_field',
-                  width: 20.0,
-                ),
-                const SizedBox(
-                  width: 4.0,
-                ),
-                Icon(icon),
-              ],
+    return InkWell(
+      onTap: _openCountryPickerMenu(
+          menuType,
+          context,
+          searchInputDecoration,
+          title,
+          titlePadding,
+          pickerHeight,
+          isSearchable,
+          countries,
+          onValuePicked),
+      child: Container(
+        padding: padding,
+        decoration: boxDecoration,
+        // color: Colors.green,
+        width: width,
+        height: countryPickerButtonHight,
+        //height: 20,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text(
+              '+${initialValue.dialCode}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-          ),
+            const SizedBox(
+              width: 4.0,
+            ),
+            Image.asset(
+              initialValue.flagImagePath,
+              package: 'ephone_field',
+              width: 20.0,
+            ),
+            const SizedBox(
+              width: 4.0,
+            ),
+            Icon(icon),
+          ],
         ),
       ),
     );
@@ -167,6 +165,7 @@ void Function()? _openCountryPickerBottomSheet(
 ) {
   return () {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       shape: pickerHeight != CountryPickerHeigth.h100
           ? const RoundedRectangleBorder(
