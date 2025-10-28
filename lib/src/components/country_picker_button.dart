@@ -7,23 +7,20 @@ import 'country_card.dart';
 import 'country_picker_menu.dart';
 
 class CountryPickerButton extends StatelessWidget {
-  const CountryPickerButton(
-      {Key? key,
-      required this.initialValue,
-      required this.onValuePicked,
-      required this.menuType,
-      required this.isSearchable,
-      required this.searchInputDecoration,
-      required this.titlePadding,
-      required this.title,
-      required this.countries,
-      required this.width,
-      required this.icon,
-      required this.padding,
-      required this.pickerHeight,
-      required this.boxDecoration,
-      this.countryPickerButtonHight})
-      : super(key: key);
+  const CountryPickerButton({
+    Key? key,
+    required this.initialValue,
+    required this.onValuePicked,
+    required this.menuType,
+    required this.isSearchable,
+    required this.searchInputDecoration,
+    required this.titlePadding,
+    required this.title,
+    required this.countries,
+    required this.width,
+    required this.icon,
+    required this.pickerHeight,
+  }) : super(key: key);
 
   final void Function(Country) onValuePicked;
   final Country initialValue;
@@ -35,51 +32,49 @@ class CountryPickerButton extends StatelessWidget {
   final CountryPickerHeigth pickerHeight;
   final String? title;
   final double width;
-  final BoxDecoration boxDecoration;
   final IconData icon;
-  final EdgeInsets padding;
-  final double? countryPickerButtonHight;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: _openCountryPickerMenu(
-          menuType,
-          context,
-          searchInputDecoration,
-          title,
-          titlePadding,
-          pickerHeight,
-          isSearchable,
-          countries,
-          onValuePicked),
-      child: Container(
-        padding: padding,
-        decoration: boxDecoration,
-        // color: Colors.green,
-        width: width,
-        height: countryPickerButtonHight,
-        //height: 20,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Image.asset(
-              initialValue.flagImagePath,
-              package: 'ephone_field',
-              width: 20.0,
-            ),
-            const SizedBox(
-              width: 4.0,
-            ),
-            Text(
-              '+${initialValue.dialCode}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(
-              width: 4.0,
-            ),
-            Icon(icon),
-          ],
+      onTap: _openCountryPickerMenu(menuType, context, searchInputDecoration, title, titlePadding, pickerHeight,
+          isSearchable, countries, onValuePicked),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8.0),
+        child: SizedBox(
+          width: width,
+          height: 20,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+               const SizedBox(
+                width: 2.0,
+              ),
+               
+
+               Image.asset(
+                initialValue.flagImagePath,
+                package: 'ephone_field',
+                width: 20.0,
+              ),
+
+         const SizedBox(
+                width: 2.0,
+              ),
+               
+              Text(
+                '+${initialValue.dialCode}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+             
+              const SizedBox(
+                width: 2.0,
+              ),
+               
+            
+             
+            ],
+          ),
         ),
       ),
     );
@@ -98,21 +93,14 @@ void Function()? _openCountryPickerMenu(
     void Function(Country) onValuePicked) {
   switch (menuType) {
     case PickerMenuType.dialog:
-      return _openCountryPickerDialog(context, searchInputDecoration, title,
-          titlePadding, isSearchable, pickerHeight, countries, onValuePicked);
+      return _openCountryPickerDialog(
+          context, searchInputDecoration, title, titlePadding, isSearchable, pickerHeight, countries, onValuePicked);
     case PickerMenuType.bottomSheet:
       return _openCountryPickerBottomSheet(
-          context,
-          searchInputDecoration,
-          title,
-          titlePadding,
-          isSearchable,
-          pickerHeight,
-          countries,
-          onValuePicked);
+          context, searchInputDecoration, title, titlePadding, isSearchable, pickerHeight, countries, onValuePicked);
     case PickerMenuType.page:
-      return _openCountryPickerPage(context, searchInputDecoration, title,
-          titlePadding, isSearchable, countries, onValuePicked);
+      return _openCountryPickerPage(
+          context, searchInputDecoration, title, titlePadding, isSearchable, countries, onValuePicked);
   }
 }
 
@@ -165,7 +153,6 @@ void Function()? _openCountryPickerBottomSheet(
 ) {
   return () {
     showModalBottomSheet(
-      backgroundColor: Colors.white,
       context: context,
       shape: pickerHeight != CountryPickerHeigth.h100
           ? const RoundedRectangleBorder(
