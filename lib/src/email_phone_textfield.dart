@@ -28,14 +28,14 @@ class EPhoneField extends StatefulWidget {
     this.onChanged,
     this.onCountryChanged,
     this.initialValue,
-    this.emptyLabelText = 'Enter Email or Phone Number',
+    this.emptyLabelText = 'Email or phone number',
     this.emailLabelText = 'Email',
     this.phoneLabelText = 'Phone number',
     this.onSaved,
     this.onFieldSubmitted,
     this.decoration = const InputDecoration(
       border: OutlineInputBorder(),
-      hintText: 'Enter Email or Phone Number',
+      hintText: 'Email or phone number',
     ),
     this.countryPickerButtonIcon = Icons.arrow_drop_down,
     this.phoneNumberMaskSplitter,
@@ -173,6 +173,8 @@ class _EphoneFieldState extends State<EPhoneField> {
   late TextEditingController _controller;
   late FocusNode _focusNode;
   late Country _selectedCountry;
+  late bool _ownsController;
+  late bool _ownsFocusNode;
 
   @override
   void initState() {
@@ -180,7 +182,9 @@ class _EphoneFieldState extends State<EPhoneField> {
     _type = widget.initialType;
     _selectedCountry = widget.initialCountry;
     _controller = widget.controller ?? TextEditingController();
+    _ownsController = widget.controller == null;
     _focusNode = widget.focusNode ?? FocusNode();
+    _ownsFocusNode = widget.focusNode == null;
     _controller.addListener(() {
       if (widget.keyboardTypeOverride == null) {
         _updateTextFieldType(); // only auto-update if no manual override
@@ -190,9 +194,13 @@ class _EphoneFieldState extends State<EPhoneField> {
 
   @override
   void dispose() {
+    if (_ownsController) {
+      _controller.dispose();
+    }
+    if (_ownsFocusNode) {
+      _focusNode.dispose();
+    }
     super.dispose();
-    _controller.dispose();
-    _focusNode.dispose();
   }
 
   @override
