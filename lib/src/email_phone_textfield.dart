@@ -267,6 +267,10 @@ class _EphoneFieldState extends State<EPhoneField> {
     EphoneFieldType newType;
     if (text.isEmpty) {
       newType = widget.initialType;
+    } else if (text.startsWith(RegExp(r'\d')) && !text.contains('@')) {
+      // If the input begins with a digit and does not contain an email signifier,
+      // treat it as a phone number regardless of any subsequent characters.
+      newType = EphoneFieldType.phone;
     } else if (text.contains('@') || int.tryParse(text) == null) {
       newType = EphoneFieldType.email;
     } else {
