@@ -186,6 +186,34 @@ void main() {
     expect(EphoneFieldCallerChecker.isOnChangedCalled, true);
   });
 
+  testWidgets('should keep focus after first character is typed',
+      (WidgetTester widgetTester) async {
+    final FocusNode focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
+
+    await widgetTester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EPhoneField(
+            focusNode: focusNode,
+          ),
+        ),
+      ),
+    );
+
+    final Finder textField = find.byType(EPhoneField);
+    await widgetTester.tap(textField);
+    await widgetTester.pump();
+
+    expect(focusNode.hasFocus, isTrue);
+
+    await widgetTester.enterText(textField, 'a');
+    await widgetTester.pump();
+
+    expect(find.text('Email'), findsOneWidget);
+    expect(focusNode.hasFocus, isTrue);
+  });
+
   testWidgets('should onSaved called onSaved while state is phone', (widgetTester) async {
     await widgetTester.pumpWidget(ePhoneFieldMock);
 

@@ -28,14 +28,14 @@ class EPhoneField extends StatefulWidget {
     this.onChanged,
     this.onCountryChanged,
     this.initialValue,
-    this.emptyLabelText = 'Enter Email or Phone Number',
+    this.emptyLabelText = 'Email or phone number',
     this.emailLabelText = 'Email',
-    this.phoneLabelText = 'Phone Number',
+    this.phoneLabelText = 'Phone number',
     this.onSaved,
     this.onFieldSubmitted,
     this.decoration = const InputDecoration(
       border: OutlineInputBorder(),
-      hintText: 'Enter Email or Phone Number',
+      hintText: 'Email or phone number',
     ),
     this.countryPickerButtonIcon = Icons.arrow_drop_down,
     this.phoneNumberMaskSplitter,
@@ -46,11 +46,17 @@ class EPhoneField extends StatefulWidget {
     this.countryPickerButtonWidth = 108.0,
     this.autovalidateMode,
     this.keyboardTypeOverride,
+    this.loseFocusAfterOneChar = true,
   }) : super(key: key);
 
   /// The [FocusNode] of the input field.
   final FocusNode? focusNode;
   final TextInputType? keyboardTypeOverride;
+
+  /// If true, the field will lose focus automatically after the user types the
+  /// first character (i.e. when content goes from length 0 -> 1). Defaults to
+  /// `false` (keep focus as usual).
+  final bool loseFocusAfterOneChar;
 
   /// The [TextEditingController] of the input field.
   final TextEditingController? controller;
@@ -173,36 +179,54 @@ class _EphoneFieldState extends State<EPhoneField> {
   late TextEditingController _controller;
   late FocusNode _focusNode;
   late Country _selectedCountry;
-  late String? Function(String?)? _selectedValidator;
+  late bool _ownsController;
+  late bool _ownsFocusNode;
+  // Tracks the previous text length so we can detect a 0 -> 1 transition.
+  int _prevTextLength = 0;
 
   @override
   void initState() {
     super.initState();
     _type = widget.initialType;
-    _updateSelectedValidator();
     _selectedCountry = widget.initialCountry;
     _controller = widget.controller ?? TextEditingController();
+    _ownsController = widget.controller == null;
     _focusNode = widget.focusNode ?? FocusNode();
-    // _controller.addListener(() => _updateTextFieldType());
-    _controller.addListener(() => _updateSelectedValidator());
+    _ownsFocusNode = widget.focusNode == null;
     _controller.addListener(() {
+      final currentText = _controller.text;
+      final currentLength = currentText.length;
+
       if (widget.keyboardTypeOverride == null) {
         _updateTextFieldType(); // only auto-update if no manual override
       }
+
+      // If requested, lose focus when the user types the first character
+      // (transition from length 0 -> 1).
+      if (widget.loseFocusAfterOneChar) {
+        if (_prevTextLength == 0 && currentLength == 1 && _focusNode.hasFocus) {
+          _focusNode.unfocus();
+        }
+      }
+
+      _prevTextLength = currentLength;
     });
   }
 
   @override
   void dispose() {
+    if (_ownsController) {
+      _controller.dispose();
+    }
+    if (_ownsFocusNode) {
+      _focusNode.dispose();
+    }
     super.dispose();
-    _controller.dispose();
-    _focusNode.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      key: ValueKey(_type), // <-- forces rebuild when type changes
       keyboardType: widget.keyboardTypeOverride ?? _type.keyboardType,
       controller: _controller,
       focusNode: _focusNode,
@@ -222,7 +246,7 @@ class _EphoneFieldState extends State<EPhoneField> {
           labelText: _type.labelText(widget.emptyLabelText,
               widget.emailLabelText, widget.phoneLabelText)),
       validator: _type.validator(
-        _selectedValidator,
+        _selectedValidatorForType(),
         _selectedCountry,
         widget.phoneNumberMaskSplitter,
       ),
@@ -236,24 +260,24 @@ class _EphoneFieldState extends State<EPhoneField> {
   Widget? _buildCountryPicker(bool isPhoneFieldSelected) {
     return isPhoneFieldSelected
         ? CountryPickerButton(
-            initialValue: _selectedCountry,
-            onValuePicked: (Country country) {
-              setState(() {
-                _selectedCountry = country;
-                widget.onCountryChanged?.call(country);
-                _focusNode.requestFocus();
-              });
-            },
-            menuType: widget.menuType,
-            isSearchable: widget.isSearchable,
-            searchInputDecoration: widget.searchInputDecoration,
-            titlePadding: widget.titlePadding,
-            title: widget.title,
-            countries: widget.countries,
-            width: widget.countryPickerButtonWidth,
-            icon: widget.countryPickerButtonIcon,
-            pickerHeight: widget.pickerHeight,
-          )
+      initialValue: _selectedCountry,
+      onValuePicked: (Country country) {
+        setState(() {
+          _selectedCountry = country;
+          widget.onCountryChanged?.call(country);
+          _focusNode.requestFocus();
+        });
+      },
+      menuType: widget.menuType,
+      isSearchable: widget.isSearchable,
+      searchInputDecoration: widget.searchInputDecoration,
+      titlePadding: widget.titlePadding,
+      title: widget.title,
+      countries: widget.countries,
+      width: widget.countryPickerButtonWidth,
+      icon: widget.countryPickerButtonIcon,
+      pickerHeight: widget.pickerHeight,
+    )
         : null;
   }
 
@@ -264,37 +288,67 @@ class _EphoneFieldState extends State<EPhoneField> {
       text = text.replaceAll(widget.phoneNumberMaskSplitter!, '');
     }
 
+    final bool startsWithDigit = text.startsWith(RegExp(r'\d'));
+    final bool containsAt = text.contains('@');
+
     EphoneFieldType newType;
     if (text.isEmpty) {
       newType = widget.initialType;
-    } else if (text.contains('@') || int.tryParse(text) == null) {
+    } else if (startsWithDigit && !containsAt) {
+      // If the input begins with a digit and does not contain an email signifier,
+      // treat it as a phone number regardless of any subsequent characters.
+      newType = EphoneFieldType.phone;
+    } else if (containsAt || int.tryParse(text) == null) {
       newType = EphoneFieldType.email;
     } else {
       newType = EphoneFieldType.phone;
     }
 
+    if (newType == EphoneFieldType.phone && startsWithDigit) {
+      final String numericOnly = text.replaceAll(RegExp(r'\D'), '');
+      if (numericOnly != _controller.text) {
+        _controller.value = TextEditingValue(
+          text: numericOnly,
+          selection: TextSelection.collapsed(offset: numericOnly.length),
+        );
+        text = numericOnly;
+      }
+    }
+
     if (newType != _type) {
       setState(() {
         _type = newType;
-        _updateSelectedValidator(); // update validator when type changes
       });
     }
   }
 
-  void _updateSelectedValidator() {
+  String? Function(String?)? _selectedValidatorForType() {
     switch (_type) {
       case EphoneFieldType.initial:
-        _selectedValidator = widget.emptyErrorText == null
+        return widget.emptyErrorText == null
             ? null
             : (value) =>
                 value == null || value.isEmpty ? widget.emptyErrorText : null;
-        break;
       case EphoneFieldType.email:
-        _selectedValidator = widget.emailValidator;
-        break;
+        // Wrap any provided emailValidator to also enforce:
+        // - If the value looks like an email (contains '@') and starts with a digit,
+        //   return an error.
+        // - Otherwise, fall back to the user-provided emailValidator if present.
+        return (value) {
+          if (value != null && value.isNotEmpty && value.contains('@')) {
+            if (RegExp(r'^\d').hasMatch(value)) {
+              return 'Email must not start with a number';
+            }
+          }
+
+          if (widget.emailValidator != null) {
+            return widget.emailValidator!(value);
+          }
+
+          return null;
+        };
       case EphoneFieldType.phone:
-        _selectedValidator = widget.phoneValidator;
-        break;
+        return widget.phoneValidator;
     }
   }
 }
