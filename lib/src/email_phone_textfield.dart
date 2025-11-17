@@ -198,7 +198,6 @@ class _EphoneFieldState extends State<EPhoneField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      key: ValueKey(_type), // <-- forces rebuild when type changes
       keyboardType: widget.keyboardTypeOverride ?? _type.keyboardType,
       controller: _controller,
       focusNode: _focusNode,
