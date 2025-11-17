@@ -30,7 +30,7 @@ class EPhoneField extends StatefulWidget {
     this.initialValue,
     this.emptyLabelText = 'Enter Email or Phone Number',
     this.emailLabelText = 'Email',
-    this.phoneLabelText = 'Phone Number',
+    this.phoneLabelText = 'Phone number',
     this.onSaved,
     this.onFieldSubmitted,
     this.decoration = const InputDecoration(
@@ -264,17 +264,31 @@ class _EphoneFieldState extends State<EPhoneField> {
       text = text.replaceAll(widget.phoneNumberMaskSplitter!, '');
     }
 
+    final bool startsWithDigit = text.startsWith(RegExp(r'\d'));
+    final bool containsAt = text.contains('@');
+
     EphoneFieldType newType;
     if (text.isEmpty) {
       newType = widget.initialType;
-    } else if (text.startsWith(RegExp(r'\d')) && !text.contains('@')) {
+    } else if (startsWithDigit && !containsAt) {
       // If the input begins with a digit and does not contain an email signifier,
       // treat it as a phone number regardless of any subsequent characters.
       newType = EphoneFieldType.phone;
-    } else if (text.contains('@') || int.tryParse(text) == null) {
+    } else if (containsAt || int.tryParse(text) == null) {
       newType = EphoneFieldType.email;
     } else {
       newType = EphoneFieldType.phone;
+    }
+
+    if (newType == EphoneFieldType.phone && startsWithDigit) {
+      final String numericOnly = text.replaceAll(RegExp(r'\D'), '');
+      if (numericOnly != _controller.text) {
+        _controller.value = TextEditingValue(
+          text: numericOnly,
+          selection: TextSelection.collapsed(offset: numericOnly.length),
+        );
+        text = numericOnly;
+      }
     }
 
     if (newType != _type) {
