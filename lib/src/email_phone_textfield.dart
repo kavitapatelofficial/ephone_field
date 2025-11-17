@@ -46,11 +46,17 @@ class EPhoneField extends StatefulWidget {
     this.countryPickerButtonWidth = 108.0,
     this.autovalidateMode,
     this.keyboardTypeOverride,
+    this.loseFocusAfterOneChar = true,
   }) : super(key: key);
 
   /// The [FocusNode] of the input field.
   final FocusNode? focusNode;
   final TextInputType? keyboardTypeOverride;
+
+  /// If true, the field will lose focus automatically after the user types the
+  /// first character (i.e. when content goes from length 0 -> 1). Defaults to
+  /// `false` (keep focus as usual).
+  final bool loseFocusAfterOneChar;
 
   /// The [TextEditingController] of the input field.
   final TextEditingController? controller;
@@ -175,6 +181,8 @@ class _EphoneFieldState extends State<EPhoneField> {
   late Country _selectedCountry;
   late bool _ownsController;
   late bool _ownsFocusNode;
+  // Tracks the previous text length so we can detect a 0 -> 1 transition.
+  int _prevTextLength = 0;
 
   @override
   void initState() {
@@ -186,9 +194,22 @@ class _EphoneFieldState extends State<EPhoneField> {
     _focusNode = widget.focusNode ?? FocusNode();
     _ownsFocusNode = widget.focusNode == null;
     _controller.addListener(() {
+      final currentText = _controller.text;
+      final currentLength = currentText.length;
+
       if (widget.keyboardTypeOverride == null) {
         _updateTextFieldType(); // only auto-update if no manual override
       }
+
+      // If requested, lose focus when the user types the first character
+      // (transition from length 0 -> 1).
+      if (widget.loseFocusAfterOneChar) {
+        if (_prevTextLength == 0 && currentLength == 1 && _focusNode.hasFocus) {
+          _focusNode.unfocus();
+        }
+      }
+
+      _prevTextLength = currentLength;
     });
   }
 
