@@ -236,24 +236,24 @@ class _EphoneFieldState extends State<EPhoneField> {
   Widget? _buildCountryPicker(bool isPhoneFieldSelected) {
     return isPhoneFieldSelected
         ? CountryPickerButton(
-            initialValue: _selectedCountry,
-            onValuePicked: (Country country) {
-              setState(() {
-                _selectedCountry = country;
-                widget.onCountryChanged?.call(country);
-                _focusNode.requestFocus();
-              });
-            },
-            menuType: widget.menuType,
-            isSearchable: widget.isSearchable,
-            searchInputDecoration: widget.searchInputDecoration,
-            titlePadding: widget.titlePadding,
-            title: widget.title,
-            countries: widget.countries,
-            width: widget.countryPickerButtonWidth,
-            icon: widget.countryPickerButtonIcon,
-            pickerHeight: widget.pickerHeight,
-          )
+      initialValue: _selectedCountry,
+      onValuePicked: (Country country) {
+        setState(() {
+          _selectedCountry = country;
+          widget.onCountryChanged?.call(country);
+          _focusNode.requestFocus();
+        });
+      },
+      menuType: widget.menuType,
+      isSearchable: widget.isSearchable,
+      searchInputDecoration: widget.searchInputDecoration,
+      titlePadding: widget.titlePadding,
+      title: widget.title,
+      countries: widget.countries,
+      width: widget.countryPickerButtonWidth,
+      icon: widget.countryPickerButtonIcon,
+      pickerHeight: widget.pickerHeight,
+    )
         : null;
   }
 
@@ -287,10 +287,27 @@ class _EphoneFieldState extends State<EPhoneField> {
         _selectedValidator = widget.emptyErrorText == null
             ? null
             : (value) =>
-                value == null || value.isEmpty ? widget.emptyErrorText : null;
+        value == null || value.isEmpty ? widget.emptyErrorText : null;
         break;
       case EphoneFieldType.email:
-        _selectedValidator = widget.emailValidator;
+      // Wrap any provided emailValidator to also enforce the new rule:
+      // - If the value looks like an email (contains '@') and starts with a digit,
+      //   return an error.
+      // - Otherwise, fall back to the user-provided emailValidator if present.
+        _selectedValidator = (value) {
+          if (value != null && value.isNotEmpty && value.contains('@')) {
+            // If the first character is a digit, disallow this email.
+            if (RegExp(r'^\d').hasMatch(value)) {
+              return 'Email must not start with a number';
+            }
+          }
+
+          if (widget.emailValidator != null) {
+            return widget.emailValidator!(value);
+          }
+
+          return null;
+        };
         break;
       case EphoneFieldType.phone:
         _selectedValidator = widget.phoneValidator;
