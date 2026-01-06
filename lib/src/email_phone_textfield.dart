@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 
 import 'components/country_picker_button.dart';
 import 'enums/country.dart';
@@ -174,6 +175,8 @@ class _EphoneFieldState extends State<EPhoneField> {
   late FocusNode _focusNode;
   late Country _selectedCountry;
   late String? Function(String?)? _selectedValidator;
+  bool _focusNodeCreatedInternally = false;
+  Timer? _focusRestoreTimer;
 
   @override
   void initState() {
@@ -182,7 +185,13 @@ class _EphoneFieldState extends State<EPhoneField> {
     _updateSelectedValidator();
     _selectedCountry = widget.initialCountry;
     _controller = widget.controller ?? TextEditingController();
-    _focusNode = widget.focusNode ?? FocusNode();
+    if (widget.focusNode != null) {
+      _focusNode = widget.focusNode!;
+      _focusNodeCreatedInternally = false;
+    } else {
+      _focusNode = FocusNode();
+      _focusNodeCreatedInternally = true;
+    }
     // _controller.addListener(() => _updateTextFieldType());
     _controller.addListener(() => _updateSelectedValidator());
     _controller.addListener(() {
@@ -196,13 +205,15 @@ class _EphoneFieldState extends State<EPhoneField> {
   void dispose() {
     super.dispose();
     _controller.dispose();
-    _focusNode.dispose();
+    _focusRestoreTimer?.cancel();
+    if (_focusNodeCreatedInternally) {
+      _focusNode.dispose();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      key: ValueKey(_type), // <-- forces rebuild when type changes
       keyboardType: widget.keyboardTypeOverride ?? _type.keyboardType,
       controller: _controller,
       focusNode: _focusNode,
@@ -241,7 +252,13 @@ class _EphoneFieldState extends State<EPhoneField> {
               setState(() {
                 _selectedCountry = country;
                 widget.onCountryChanged?.call(country);
-                _focusNode.requestFocus();
+                print("====request to re focus => Selected country: $_selectedCountry");
+                // Keep focus on the text field - don't unfocus
+                Future.delayed(Duration(milliseconds: 100), () {
+                  if (_focusNode.canRequestFocus) {
+                    _focusNode.requestFocus();
+                  }
+                });
               });
             },
             menuType: widget.menuType,
@@ -274,9 +291,19 @@ class _EphoneFieldState extends State<EPhoneField> {
     }
 
     if (newType != _type) {
+      // Cancel any pending focus restoration
+      _focusRestoreTimer?.cancel();
+      
       setState(() {
         _type = newType;
         _updateSelectedValidator(); // update validator when type changes
+      });
+      
+      // Keep focus on the text field after type change - debounced to prevent repeated calls
+      _focusRestoreTimer = Timer(Duration(milliseconds: 30), () {
+        if (mounted && _focusNode.canRequestFocus) {
+          _focusNode.requestFocus();
+        }
       });
     }
   }
