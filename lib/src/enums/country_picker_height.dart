@@ -10,9 +10,13 @@ enum CountryPickerHeigth {
 
   /// 50% of screen height
   h50,
+  h40,
+  h30,
+
 
   /// 25% of screen height
-  h25
+  h25,
+
 }
 
 /// This extension is used to get the height of the country picker
@@ -36,6 +40,12 @@ extension CountryPickerHeigthExtension on CountryPickerHeigth {
       /// 25% of screen height
       case CountryPickerHeigth.h25:
         return MediaQuery.of(context).size.height * 0.25;
+      case CountryPickerHeigth.h40:
+        return MediaQuery.of(context).size.height * 0.40;
+      case CountryPickerHeigth.h30:
+        return MediaQuery.of(context).size.height * 0.30;
+      default:
+        return MediaQuery.of(context).size.height;
     }
   }
 }

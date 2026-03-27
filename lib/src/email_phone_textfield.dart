@@ -190,6 +190,8 @@ class _EphoneFieldState extends State<EPhoneField> {
         _updateTextFieldType(); // only auto-update if no manual override
       }
     });
+    // When text becomes empty via backspace, reset keyboard like clear button.
+    _controller.addListener(_resetKeyboardIfEmpty);
   }
 
   @override
@@ -276,6 +278,19 @@ class _EphoneFieldState extends State<EPhoneField> {
       setState(() {
         _type = newType;
         _updateSelectedValidator(); // update validator when type changes
+      });
+    }
+  }
+
+  /// When input becomes empty (user deleted all characters), briefly unfocus
+  /// and refocus the field so the keyboard is "reset" just like the clear icon.
+  void _resetKeyboardIfEmpty() {
+    if (_controller.text.isEmpty && _focusNode.hasFocus) {
+      _focusNode.unfocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          FocusScope.of(context).requestFocus(_focusNode);
+        }
       });
     }
   }
